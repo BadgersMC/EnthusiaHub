@@ -11,6 +11,8 @@ import dev.strafbefehl.deluxehubreloaded.config.Version;
 import dev.strafbefehl.deluxehubreloaded.cooldown.CooldownManager;
 import dev.strafbefehl.deluxehubreloaded.hook.HooksManager;
 import dev.strafbefehl.deluxehubreloaded.inventory.InventoryManager;
+import dev.strafbefehl.deluxehubreloaded.menu.bedrock.FloodgatePlatformDetection;
+import dev.strafbefehl.deluxehubreloaded.menu.bedrock.FormStateManager;
 import dev.strafbefehl.deluxehubreloaded.module.ModuleManager;
 import dev.strafbefehl.deluxehubreloaded.module.ModuleType;
 import dev.strafbefehl.deluxehubreloaded.module.modules.hologram.HologramManager;
@@ -29,6 +31,11 @@ import java.util.logging.Level;
 public class DeluxeHubPlugin extends JavaPlugin {
 
 	private static final int BSTATS_ID = 23061;
+	private static DeluxeHubPlugin instance;
+
+	public static DeluxeHubPlugin getInstance() {
+		return instance;
+	}
 
 	private ConfigManager configManager;
 	private ActionManager actionManager;
@@ -37,9 +44,12 @@ public class DeluxeHubPlugin extends JavaPlugin {
 	private CooldownManager cooldownManager;
 	private ModuleManager moduleManager;
 	private InventoryManager inventoryManager;
+	private FloodgatePlatformDetection platformDetection;
+	private FormStateManager formStateManager;
 	private Version currentVersion;
 
 	public void onEnable() {
+		instance = this;
 		long start = System.currentTimeMillis();
 		getLogger().log(Level.INFO, "Based on original code from DeluxeHub");
 		getLogger().log(Level.INFO, "Modified, and maintained by Strafbefehl, 2025");
@@ -96,6 +106,11 @@ public class DeluxeHubPlugin extends JavaPlugin {
 		// Inventory (GUI) manager
 		inventoryManager = new InventoryManager();
 		if (!hooksManager.isHookEnabled("HEAD_DATABASE")) inventoryManager.onEnable(this);
+
+		// Initialize Bedrock menu system (safe even when Floodgate absent)
+		platformDetection = new FloodgatePlatformDetection(this);
+		int stateExpirationMinutes = getConfig().getInt("bedrock_menus.state_expiration_minutes", 30);
+		formStateManager = new FormStateManager(stateExpirationMinutes);
 
 		// Core plugin modules
 		moduleManager = new ModuleManager();
@@ -217,5 +232,13 @@ public class DeluxeHubPlugin extends JavaPlugin {
 
 	public ActionManager getActionManager() {
 		return actionManager;
+	}
+
+	public FloodgatePlatformDetection getPlatformDetection() {
+		return platformDetection;
+	}
+
+	public FormStateManager getFormStateManager() {
+		return formStateManager;
 	}
 }

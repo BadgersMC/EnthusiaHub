@@ -484,3 +484,29 @@ legacySystems:
   # If this is disabled build, destroy, interact, pvp, pickup and drop will be only possible in the build mode instead all the time as a admin
   # If this is enabled, the old system will be used (permission based https://strafbefehl.github.io/DeluxeHubReloadedDocs/goodtoknow/worldprotection)
   permissionsEnabled: false
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+# | BEDROCK MENUS (Floodgate)                |
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+bedrock_menus:
+  # Enable Bedrock Edition form-based menus (requires Floodgate + Geyser)
+  enabled: true
+
+  # Force bedrock menus for all players (testing/debug)
+  force_for_all: false
+
+  # Fallback to Java Edition inventory menus when Bedrock menus unavailable
+  fallback_to_java: true
+
+  # Form timeout in seconds
+  form_timeout_seconds: 300
+
+  # Form state expiration in minutes (multi-step workflows)
+  state_expiration_minutes: 30
+
+  # Debug logging for form interactions
+  debug: false
+
+  server_selector:
+    enabled: true
+    cache_form: true

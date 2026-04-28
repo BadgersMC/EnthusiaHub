@@ -40,7 +40,7 @@ public class HotbarManager extends Module {
                 }
 
                 customItem.setConfigurationSection(config.getConfigurationSection("custom_join_items.items." + entry));
-                customItem.setAllowMovement(config.getBoolean("custom_join_items.disable_inventory_movement"));
+                customItem.setAllowMovement(!config.getBoolean("custom_join_items.disable_inventory_movement"));
                 registerHotbarItem(customItem);
             }
         }
@@ -49,7 +49,7 @@ public class HotbarManager extends Module {
             ItemStack item = ItemStackBuilder.getItemStack(config.getConfigurationSection("player_hider.not_hidden")).build();
             PlayerHider playerHider = new PlayerHider(this, item, config.getInt("player_hider.slot"), "PLAYER_HIDER");
 
-            playerHider.setAllowMovement(config.getBoolean("player_hider.disable_inventory_movement"));
+            playerHider.setAllowMovement(!config.getBoolean("player_hider.disable_inventory_movement"));
 
             registerHotbarItem(playerHider);
         }

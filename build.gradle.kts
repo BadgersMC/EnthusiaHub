@@ -24,14 +24,16 @@ dependencies {
     implementation("com.github.cryptomorin:XSeries:13.0.0")
     implementation("javax.inject:javax.inject:1")
     implementation("javax.annotation:javax.annotation-api:1.2")
-    implementation("com.github.BGMP.CommandFramework:command-framework-bukkit:master")
+    implementation("com.github.BGMP.CommandFramework:command-framework-bukkit:master") {
+        exclude(group = "org.bukkit", module = "bukkit")
+    }
     implementation("com.tcoded:FoliaLib:0.5.1")
-    implementation("de.tr7zw:item-nbt-api:2.15.3") // UPDATE THIS FOR EACH NEW MC VERSION
+    implementation("de.tr7zw:item-nbt-api:2.15.3") // verified compatible with 1.21.x
     implementation("org.bstats:bstats-bukkit-lite:1.7")
     implementation("com.github.shynixn.headdatabase:hdb-api:1.0")
     implementation("com.github.ItzSave:ZithiumLibrary:1f5182b77f")
 
-    compileOnly("io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     compileOnly("net.md-5:bungeecord-chat:1.16-R0.1")
     compileOnly("com.mojang:authlib:1.5.21")
     compileOnly("me.clip:placeholderapi:2.11.6")

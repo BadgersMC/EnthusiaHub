@@ -1,0 +1,226 @@
+# EnthusiaHub Migration Design
+
+**Date:** 2026-04-27
+**Project:** EnthusiaHub (BadgersMC fork of DeluxeHub)
+**Status:** Approved
+
+---
+
+## Overview
+
+Two-phase plan for EnthusiaHub:
+
+- **Phase 1 (immediate):** Java patch — fix three bug clusters and update to Paper 1.21.11. Fastest path to a working hub.
+- **Phase 2 (future):** Full in-house Kotlin rewrite using nexus-paper, InventoryFramework (IF), and SPEAR architecture. Returns all development under BadgersMC control.
+
+---
+
+## Phase 1 — Java Patch
+
+### 1.1 MC Version Update
+
+Bump all version-sensitive dependencies to Paper 1.21.11:
+
+| Dependency | Current | Target |
+|---|---|---|
+| `paper-api` | `1.20.1-R0.1-SNAPSHOT` | `1.21.11-R0.1-SNAPSHOT` |
+| `item-nbt-api` | `2.15.3` | latest compatible |
+| `XSeries` | `13.0.0` | latest compatible |
+
+Audit all deprecated API calls introduced between 1.20.1 and 1.21.11. Pay attention to `Enchantment` registry changes (moved to `Registry.ENCHANTMENT` in 1.21+) and any `ItemMeta` / `Component` API shifts.
+
+---
+
+### 1.2 Bug: PvP Sword Event Priority
+
+**Root cause:** `PvPSwordModule.onEnable()` fetches `pvpSwordItem` from `HotbarManager.getPvPSwordItem()` at startup. If module initialization order places `PvPSwordModule` before `HotbarManager`, `pvpSwordItem` is null. `isInPvPMode()` returns `false` for null reference → WorldProtect always sees "neither player in PvP mode" → damage always cancelled.
+
+Secondary issue: `WorldProtect.onPvPDamage` fires at `LOWEST`. Even when both players are in PvP mode and `onPvPDamage` correctly skips cancellation, unrelated handlers at `NORMAL`/`HIGH` can still interfere.
+
+**Fix:**
+1. Make `PvPSwordModule.isInPvPMode()` fetch `pvpSwordItem` lazily (on first call) rather than caching at `onEnable()`. This eliminates the init-order dependency.
+2. Change `WorldProtect.onPvPDamage` to `EventPriority.HIGH` and add `ignoreCancelled = false` so it can explicitly uncancel events that other LOW-priority handlers cancelled first.
+3. Add permission `enthusia.pvp.bypass` — checked in `onPvPDamage` to allow LumaSG (and any other minigame) to bypass WorldProtect PvP cancellation entirely. LumaSG grants this to its players on game start, revokes on end.
+
+---
+
+### 1.3 Bug: Hotbar Items Moveable in Inventory
+
+**Root cause:** Logic inversion in `HotbarManager.onEnable()`:
+
+```java
+// Current — inverted
+customItem.setAllowMovement(config.getBoolean("custom_join_items.disable_inventory_movement"));
+
+// Fix — negate to match intent
+customItem.setAllowMovement(!config.getBoolean("custom_join_items.disable_inventory_movement"));
+```
+
+`disable_inventory_movement: true` in config means "movement should be disabled" → `allowMovement` should be `false` → the `InventoryClickEvent` handler cancels the click. Currently it does the opposite.
+
+Same inversion applies to `PlayerHider` item setup. Both fixed with negation.
+
+`HotbarItem.onInventoryClick` also needs to handle the cursor item (item being dragged onto the slot), not just the clicked item. Add check: if cursor item has `hotbarItem` NBT key and target slot is a hotbar slot, cancel.
+
+---
+
+### 1.4 Bug: Hotbar Items Droppable
+
+**Root cause:** Same `allowMovement` inversion as 1.3. `HotbarItem.onItemDrop` returns early when `allowMovement=true`, which is incorrectly set when `disable_inventory_movement: true`.
+
+Fixed by the same negation in 1.3. No additional changes needed once 1.3 is applied.
+
+---
+
+### 1.5 Bug: Hotbar Items Lost on Player Death
+
+**Root cause:** No `PlayerDeathEvent` listener on `HotbarItem` strips items from the drop list. `hotbarPlayerRespawn` restores items on respawn but items are still dropped as loot on death.
+
+**Fix:** Add `@EventHandler` on `PlayerDeathEvent` in `HotbarItem`:
+- Iterate `event.getDrops()`, remove any `ItemStack` whose NBT `hotbarItem` key matches `this.key`.
+- `hotbarPlayerRespawn` already handles re-giving — no change needed there.
+
+`PvPSwordItem` already has its own `onPlayerDeath` that clears `pvpMode` and cancels countdowns. That handler is correct and stays.
+
+---
+
+## Phase 2 — Kotlin + Nexus Rewrite
+
+> Blueprint for a future, from-scratch EnthusiaHub in BadgersMC's standard in-house stack. Build in a new repo (`BadgersMC/EnthusiaHub-Kotlin`), deploy when feature-parity is confirmed, retire the Java fork.
+
+### 2.1 Stack
+
+| Concern | Choice | Reason |
+|---|---|---|
+| Language | Kotlin 2.x | Team standard, nexus requires it |
+| DI / lifecycle | `nexus-paper` | Already in-house, annotation-driven |
+| Commands | `nexus-paper` command scanner | Replaces CommandFramework |
+| GUI menus | InventoryFramework (IF) 0.12+ | Team familiar from LumaGuilds, pane-based, XML support |
+| Scheduling | FoliaLib (kept) | Folia-compatible, well-integrated |
+| Config | KAML | Replaces verbose Bukkit YAML boilerplate |
+| NBT | `item-nbt-api` (kept) | No replacement needed |
+| Placeholder support | PlaceholderAPI (kept compileOnly) | Server standard |
+| Target API | Paper 1.21.11 | Aligns with nexus-paper's Paper target |
+
+---
+
+### 2.2 Architecture (Hexagonal / SPEAR)
+
+```
+domain          ← pure Kotlin, zero Bukkit imports
+application     ← use cases, depends only on domain
+infrastructure  ← Paper/Bukkit glue, nexus wiring, IF menus
+```
+
+**Layer rules (enforced by SPEAR):**
+- `domain` imports nothing from `application` or `infrastructure`
+- `application` imports only `domain`
+- `infrastructure` imports all three + frameworks
+
+---
+
+### 2.3 Domain Layer
+
+Pure Kotlin data classes and interfaces. No Bukkit.
+
+```
+domain/
+  model/
+    HotbarItem.kt          // data class: key, slot, material, displayName, lore, actions
+    HubModule.kt           // sealed interface for all module types
+    PlayerState.kt         // transient per-player state (pvpMode, hidden, etc.)
+    SpawnPoint.kt          // value object: world, x, y, z, yaw, pitch
+  action/
+    HubAction.kt           // sealed class: Message, Sound, Command, Title, Actionbar, Menu, Server
+  port/
+    PlayerStateRepository.kt   // interface: get/set PlayerState by UUID
+    ModuleRepository.kt        // interface: load module configs
+```
+
+---
+
+### 2.4 Application Layer
+
+Use cases — one class per operation. Depend only on domain ports.
+
+```
+application/
+  usecase/
+    GiveHotbarItems.kt
+    OpenMenu.kt
+    TeleportToSpawn.kt
+    TogglePvPMode.kt
+    TogglePlayerVisibility.kt
+    HandlePlayerJoin.kt
+    HandlePlayerDeath.kt
+    HandlePlayerRespawn.kt
+```
+
+Each use case is a simple `operator fun invoke(...)` — no framework annotations.
+
+---
+
+### 2.5 Infrastructure Layer
+
+Paper/Bukkit implementations of domain ports + nexus wiring + IF menus.
+
+```
+infrastructure/
+  nexus/
+    EnthusiaHubPlugin.kt       // JavaPlugin entry point, nexus bootstrapper
+  listener/
+    WorldProtectListener.kt    // all world-protect events, correct priorities
+    HotbarListener.kt          // click/drop/death/respawn item protection
+    PvPListener.kt             // PvP sword, clean priority model
+  command/
+    HubCommand.kt              // @Subcommand annotation-driven
+    FlyCommand.kt
+    VanishCommand.kt
+  menu/
+    ServerSelectorMenu.kt      // IF StaticPane / PaginatedPane
+    PlayerHiderMenu.kt
+  module/
+    DoubleJumpModule.kt
+    LaunchpadModule.kt
+    HologramModule.kt
+    WorldProtectModule.kt
+    PvPSwordModule.kt          // owns pvp mode state, no external dependency
+  config/
+    KamlConfigLoader.kt
+  repository/
+    InMemoryPlayerStateRepository.kt
+```
+
+**PvP model in Phase 2 (clean design):**
+- `PvPSwordModule` owns a `Set<UUID>` pvpMode state internally — not split across Module + Item.
+- `WorldProtectListener` subscribes to a `PvPStateChangedEvent` (custom Paper event) rather than calling into modules directly.
+- Bypass via permission `enthusia.pvp.bypass` retained from Phase 1.
+
+**IF menu pattern:**
+- Static menus (server selector, player hider) defined via XML loaded from `resources/menus/`
+- Dynamic elements (online player counts, player heads) injected programmatically into named panes after XML load
+- Consistent with LumaGuilds usage
+
+---
+
+### 2.6 Migration Checklist (Phase 2 Gate)
+
+Before retiring the Java fork, verify:
+
+- [ ] All Phase 1 bug fixes are replicated correctly in Phase 2 codebase
+- [ ] Feature parity with Java fork: all modules, all commands, all menus
+- [ ] SPEAR requirements doc written and all REQ- IDs covered by tests
+- [ ] LumaSG bypass verified on staging server
+- [ ] No Folia-incompatible scheduling
+
+---
+
+## Decision Log
+
+| Decision | Reason |
+|---|---|
+| Incremental not big-bang | Need working hub fast |
+| Keep FoliaLib in Phase 2 | Folia support required, no equivalent in nexus-paper yet |
+| IF over custom inventory | Team familiar, actively maintained, supports 1.21+ |
+| Lazy init for PvPSwordModule | Eliminates fragile module init-order dependency |
+| `enthusia.pvp.bypass` permission | Clean seam for LumaSG without coupling plugins |

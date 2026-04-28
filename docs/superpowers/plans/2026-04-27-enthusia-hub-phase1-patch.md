@@ -43,6 +43,18 @@ implementation("de.tr7zw:item-nbt-api:2.15.3") // verified compatible with 1.21.
 ```
 > item-nbt-api 2.15.3 is compatible with 1.21.x. No version bump needed — the comment is the fix.
 
+- [ ] **Step 2b: Exclude transitive bukkit from CommandFramework**
+
+CommandFramework pulls `org.bukkit:bukkit:1.15.2-R0.1-SNAPSHOT` transitively, which conflicts with paper-api 1.21.11's bundled Bukkit capability and fails dependency resolution. Add an exclude:
+
+```kotlin
+implementation("com.github.BGMP.CommandFramework:command-framework-bukkit:master") {
+    exclude(group = "org.bukkit", module = "bukkit")
+}
+```
+
+Without this, `./gradlew shadowJar` aborts before compilation with `Cannot select module with conflict on capability 'org.bukkit:bukkit:1.21.11-R0.1-SNAPSHOT' also provided by ['org.bukkit:bukkit:1.15.2-R0.1-SNAPSHOT'...]`.
+
 - [ ] **Step 3: Update api-version in plugin.yml**
 
 In `src/main/resources/plugin.yml`, change:
@@ -66,7 +78,70 @@ Expected: `BUILD SUCCESSFUL`. If compilation errors appear, note them — they w
 
 ```bash
 git add build.gradle.kts src/main/resources/plugin.yml
-git commit -m "chore: bump paper-api to 1.21.11, update api-version"
+git commit -m "chore(build): bump paper-api to 1.21.11"
+```
+
+---
+
+### Task 1.5: Replace Paper 1.21-Removed APIs in Unrelated Files
+
+**Files:**
+- Modify: `src/main/java/net/zithium/deluxehub/action/ActionManager.java`
+- Modify: `src/main/java/net/zithium/deluxehub/module/modules/player/PlayerListener.java`
+- Modify: `src/main/java/net/zithium/deluxehub/utility/ItemStackBuilder.java`
+
+After the paper-api bump, `./gradlew shadowJar` surfaces three pre-existing 1.21 API removals unrelated to the PvP/hotbar bug clusters but blocking compilation. Patch them before Task 2 (Task 2's `Enchantment.getByName` fix is masked by these earlier compile errors).
+
+- [ ] **Step 1: Swap commons-lang for commons-lang3 in ActionManager**
+
+Paper dropped the legacy `org.apache.commons.lang` (lang2) bundle at 1.21; only `commons-lang3` remains. In `ActionManager.java`:
+
+```java
+import org.apache.commons.lang.StringUtils;
+```
+to:
+```java
+import org.apache.commons.lang3.StringUtils;
+```
+
+- [ ] **Step 2: Rename Attribute.GENERIC_MAX_HEALTH in PlayerListener**
+
+The `GENERIC_` prefix was dropped from attribute keys in 1.21. In `PlayerListener.java`:
+
+```java
+player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+```
+to:
+```java
+player.setHealth(player.getAttribute(Attribute.MAX_HEALTH).getValue());
+```
+
+- [ ] **Step 3: Rename Enchantment.ARROW_INFINITE in ItemStackBuilder**
+
+The vanilla enchantment `arrow_infinite` was renamed to `infinity` in the 1.21 registry. The Bukkit constant follows. In `ItemStackBuilder.java` (`withGlow()` helper):
+
+```java
+ITEM_STACK.addUnsafeEnchantment(Enchantment.ARROW_INFINITE, 1);
+```
+to:
+```java
+ITEM_STACK.addUnsafeEnchantment(Enchantment.INFINITY, 1);
+```
+
+- [ ] **Step 4: Build**
+
+```bash
+./gradlew shadowJar
+```
+Expected: `BUILD SUCCESSFUL` (only deprecation warnings on `Sound.valueOf` and `BungeeAction` remain — non-blocking).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/main/java/net/zithium/deluxehub/action/ActionManager.java \
+        src/main/java/net/zithium/deluxehub/module/modules/player/PlayerListener.java \
+        src/main/java/net/zithium/deluxehub/utility/ItemStackBuilder.java
+git commit -m "fix: replace Paper 1.21-removed APIs"
 ```
 
 ---

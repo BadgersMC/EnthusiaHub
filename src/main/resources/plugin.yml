@@ -3,10 +3,10 @@ authors: ["Strafbefehl", "ItsLewizzz"]
 version: ${version}
 description: ${description}
 website: ${url}
-api-version: 1.13
+api-version: '1.21'
 main: dev.strafbefehl.deluxehubreloaded.DeluxeHubPlugin
 loadbefore: [Essentials]
-softdepend: [PlaceholderAPI, HeadDatabase, Multiverse-Core]
+softdepend: [PlaceholderAPI, HeadDatabase, Multiverse-Core, floodgate]
 permissions:
   deluxehub.*:
     description: Gives access to all DeluxeHub permissions

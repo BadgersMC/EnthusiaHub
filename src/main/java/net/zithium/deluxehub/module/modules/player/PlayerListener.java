@@ -104,14 +104,21 @@ public class PlayerListener extends Module {
             }
         }
 
-        // Heal the player
-        if (spawnHeal) {
+        // Check if player is in PvP mode - don't heal or extinguish them
+        Module pvpModule = getPlugin().getModuleManager().getModule(ModuleType.PVP_SWORD);
+        boolean inPvPMode = false;
+        if (pvpModule instanceof net.zithium.deluxehub.module.modules.hotbar.PvPSwordModule pvpSword) {
+            inPvPMode = pvpSword.isInPvPMode(player);
+        }
+
+        // Heal the player (unless in PvP mode)
+        if (spawnHeal && !inPvPMode) {
             player.setFoodLevel(20);
             player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
         }
 
-        // Extinguish
-        if (extinguish) {
+        // Extinguish (unless in PvP mode)
+        if (extinguish && !inPvPMode) {
             player.setFireTicks(0);
         }
 

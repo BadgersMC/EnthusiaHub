@@ -69,99 +69,6 @@ anti_wdl:
   # There is no need to kick the player if he is running WDL as our system hooks into the mod to prevent a world download
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-# | SCOREBOARD                               |
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-scoreboard:
-  # Should the scoreboard feature be enabled?
-  enabled: true
-
-  # Should we delay showing the scoreboard?
-  # Value in ticks (20 ticks = 1 second), 0 to disable
-  display_delay:
-    server_enter: 60 # 3 seconds
-    world_change: 40 # 2 seconds
-
-  # Should we refresh the scoreboard (update placeholders)?
-  refresh:
-    enabled: true
-    rate: 200 # In ticks (20 ticks = 1 second)
-
-  title: "&d&lDeluxeHub 3 &7(%online%/%online_max%)"
-  lines:
-    - "&7&m----------------------"
-    - "&e&lPlayer:"
-    - "  &f%player%"
-    - ""
-    - "&e&lRank:"
-    - "  &f%vault_rank%"
-    - "&7&m----------------------"
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-# |TABLIST                                   |
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-tablist:
-  # Should the tablist feature be enabled?
-  enabled: true
-
-  # Should we refresh the tablist (update placeholders)?
-  refresh:
-    enabled: true
-    rate: 400 # In ticks (20 ticks = 1 second)
-
-  # Modify the header of the tablist
-  header:
-    - ""
-    - "&d&lDeluxeHub &7(%online%/%online_max%)"
-    - ""
-
-  # Modify the footer of the tablist
-  footer:
-    - ""
-    - "&6&lWebsite &fwww.examplemc.net"
-    - "&e&lStore &fbuy.examplemc.net"
-    - ""
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-# | AUTO BROADCAST                           |
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-announcements:
-  # Should the announcements system be enabled ?
-  enabled: true
-
-  # Delay to send announcements (in seconds)
-  delay: 60
-
-  # How many players should be required to send announcements?
-  required_players: 1
-
-  sound:
-    enabled: true
-    value: BLOCK_NOTE_BLOCK_PLING
-    volume: 1.0
-    pitch: 1.0
-
-  # Announcement list
-  announcements:
-    test1:
-      - "&r"
-      - "&e&lANNOUNCEMENT"
-      - "&7Rate this plugin 5 stars on Spigot!"
-      - "&r"
-    test2:
-      - "&r"
-      - "&e&lANNOUNCEMENT"
-      - "&7This plugin was created by &eItzSave & ItsLewizzz"
-      - "&r"
-    test3:
-      - "&r"
-      - "&e&lANNOUNCEMENT"
-      - "&7Configure these messages in the &bconfig.yml"
-      - "&r"
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 # | LAUNCHPAD                                |
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -199,38 +106,6 @@ double_jump:
   # Actions executed upon use of double jump
   actions:
     - '[SOUND] ENTITY_BAT_TAKEOFF'
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-# | CHAT MANAGEMENT                          |
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-command_block:
-  # Should the command blocker feature be enabled?
-  enabled: true
-
-  # List of commands that will be blocked
-  blocked_commands:
-    - /pl
-    - /plugins
-    - /?
-    - /bukkit:?
-    - /bukkit:plugins
-    - /bukkit:pl
-    - /bukkit:help
-    - /ver
-    - /version
-    - /bukkit:version
-    - /bukkit:ver
-
-anti_swear:
-  # Should the anti-swear feature be enabled?
-  enabled: true
-
-  # List of words that will be blocked
-  blocked_words:
-    - fuck
-    - shit
-    - bitch
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 # | WORLD EVENT SETTINGS                     |
@@ -379,3 +254,99 @@ player_hider:
     display_name: '&dPlayers &8&l> &cHidden &7(Right-Click)'
     lore:
       - '&7Click to show all players!'
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+# | PVP SWORD                                |
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+pvp_sword:
+  enabled: true
+  slot: 0
+
+  # Sword item configuration
+  sword:
+    material: DIAMOND_SWORD
+    display_name: "&c&lPvP Sword"
+    lore:
+      - ""
+      - "&7Switch to this sword to enter PvP mode"
+      - "&7Wait 5 seconds to activate/deactivate"
+      - ""
+      - "&eOnly PvP players can damage each other!"
+    enchantments:
+      - "DAMAGE_ALL:1"
+    glow: true
+
+  # Countdown configuration
+  countdown:
+    duration: 5  # seconds
+    actionbar_format: "&c&lPvP Mode {action} in &f{time}s"
+    title_format: "&c{time}"
+    subtitle_format: "&7Switching to &c{action} &7mode"
+    sound:
+      enabled: true
+      tick_sound: "BLOCK_NOTE_BLOCK_HAT"
+      complete_sound: "ENTITY_PLAYER_LEVELUP"
+
+  # Armor configuration
+  armor:
+    helmet:
+      material: DIAMOND_HELMET
+      enchantments:
+        - "DURABILITY:3"
+    chestplate:
+      material: DIAMOND_CHESTPLATE
+      enchantments:
+        - "DURABILITY:3"
+    leggings:
+      material: DIAMOND_LEGGINGS
+      enchantments:
+        - "DURABILITY:3"
+    boots:
+      material: DIAMOND_BOOTS
+      enchantments:
+        - "DURABILITY:3"
+
+    # Random armor trim (1.20+)
+    random_trim: true
+
+  # Death effects
+  death:
+    lightning: true
+    knockback:
+      enabled: true
+      strength: 1.5
+      only_pvp_players: true
+    remove_items: true  # Don't drop items on PvP death
+    exit_pvp_mode: true  # Exit PvP mode on death
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+# | BEDROCK MENUS SETTINGS                   |
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+bedrock_menus:
+  # Enable Bedrock Edition form-based menus
+  enabled: true
+
+  # Force bedrock menus for all players (testing/debug)
+  # WARNING: Only enable if you want Java players to also see Bedrock forms
+  force_for_all: false
+
+  # Fallback to Java Edition inventory menus when Bedrock menus unavailable
+  fallback_to_java: true
+
+  # Form timeout in seconds (how long before forms auto-close)
+  form_timeout_seconds: 300  # 5 minutes
+
+  # Form state expiration in minutes (for multi-step workflows)
+  state_expiration_minutes: 30
+
+  # Debug mode - logs all form interactions
+  debug: false
+
+  # Specific menu settings
+  server_selector:
+    # Use Bedrock form for server selector menu
+    enabled: true
+    # Cache the server list form for better performance
+    cache_form: true

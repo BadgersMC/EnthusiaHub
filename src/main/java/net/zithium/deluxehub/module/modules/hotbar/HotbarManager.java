@@ -6,6 +6,7 @@ import net.zithium.deluxehub.module.Module;
 import net.zithium.deluxehub.module.ModuleType;
 import net.zithium.deluxehub.module.modules.hotbar.items.CustomItem;
 import net.zithium.deluxehub.module.modules.hotbar.items.PlayerHider;
+import net.zithium.deluxehub.module.modules.hotbar.items.PvPSwordItem;
 import net.zithium.deluxehub.utility.ItemStackBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -17,6 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class HotbarManager extends Module {
 
     private List<HotbarItem> hotbarItems;
+    private PvPSwordItem pvpSwordItem;
 
     public HotbarManager(DeluxeHubPlugin plugin) {
         super(plugin, ModuleType.HOTBAR_ITEMS);
@@ -52,6 +54,19 @@ public class HotbarManager extends Module {
             registerHotbarItem(playerHider);
         }
 
+        if (config.getBoolean("pvp_sword.enabled")) {
+            ItemStack item = ItemStackBuilder.getItemStack(config.getConfigurationSection("pvp_sword.sword")).build();
+            pvpSwordItem = new PvPSwordItem(this, item, config.getInt("pvp_sword.slot"), "PVP_SWORD");
+
+            if (config.contains("pvp_sword.permission")) {
+                pvpSwordItem.setPermission(config.getString("pvp_sword.permission"));
+            }
+
+            pvpSwordItem.setAllowMovement(false); // Don't allow moving the PvP sword
+
+            registerHotbarItem(pvpSwordItem);
+        }
+
         giveItems();
     }
 
@@ -75,5 +90,9 @@ public class HotbarManager extends Module {
 
     private void removeItems() {
         Bukkit.getOnlinePlayers().stream().filter(player -> !inDisabledWorld(player.getLocation())).forEach(player -> hotbarItems.forEach(hotbarItem -> hotbarItem.removeItem(player)));
+    }
+
+    public PvPSwordItem getPvPSwordItem() {
+        return pvpSwordItem;
     }
 }

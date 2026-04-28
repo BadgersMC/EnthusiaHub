@@ -22,13 +22,10 @@ permissions:
     children:
       deluxehub.command.help: true
       deluxehub.command.reload: true
-      deluxehub.command.scoreboard: true
       deluxehub.command.openmenu: true
       deluxehub.command.holograms: true
       deluxehub.command.gamemode: true
       deluxehub.command.gamemode.others: true
-      deluxehub.command.clearchat: true
-      deluxehub.command.lockchat: true
       deluxehub.command.fly: true
       deluxehub.command.fly.others: true
       deluxehub.command.setlobby: true
@@ -36,22 +33,19 @@ permissions:
   deluxehub.bypass.*:
     description: Gives access to all bypass permissions
     children:
-      deluxehub.bypass.antiswear: true
-      deluxehub.bypass.commands: true
-      deluxehub.bypass.lockchat: true
       deluxehub.bypass.antiwdl: true
       deluxehub.bypass.doublejump: false
   deluxehub.alert.*:
     description: Gives access to all alert permissions
     children:
       deluxehub.alert.updates: true
-      deluxehub.alert.antiswear: true
       deluxehub.alert.antiwdl: true
   deluxehub.item.*:
     description: Gives access to all item based permissions
     children:
       deluxehub.item.drop: true
       deluxehub.item.pickup: true
+      deluxehub.item.pvpsword: true
   deluxehub.player.*:
     description: Gives access to all player based permissions
     children:

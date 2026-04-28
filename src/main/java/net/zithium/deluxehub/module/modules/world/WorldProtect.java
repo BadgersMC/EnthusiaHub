@@ -328,13 +328,52 @@ public class WorldProtect extends Module {
             return;
         }
 
+        // Skip all damage protection if BOTH attacker and victim are in PvP mode
+        if (event instanceof EntityDamageByEntityEvent entityEvent) {
+            EntityDamageEvent.DamageCause cause = event.getCause();
+            if (cause == EntityDamageEvent.DamageCause.ENTITY_ATTACK ||
+                cause == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK ||
+                cause == EntityDamageEvent.DamageCause.PROJECTILE) {
+
+                // Get the actual attacker (handle projectiles)
+                Player attacker = null;
+                if (entityEvent.getDamager() instanceof Player) {
+                    attacker = (Player) entityEvent.getDamager();
+                } else if (entityEvent.getDamager() instanceof org.bukkit.entity.Projectile projectile) {
+                    if (projectile.getShooter() instanceof Player) {
+                        attacker = (Player) projectile.getShooter();
+                    }
+                }
+
+                // Only bypass if BOTH players are in PvP mode
+                if (attacker != null) {
+                    Module pvpModule = getPlugin().getModuleManager().getModule(ModuleType.PVP_SWORD);
+                    if (pvpModule instanceof net.zithium.deluxehub.module.modules.hotbar.PvPSwordModule pvpSword) {
+                        if (pvpSword.isInPvPMode(player) && pvpSword.isInPvPMode(attacker)) {
+                            return; // Allow all damage processing - both in PvP mode
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check if player is in PvP mode - if so, allow fire damage but still protect from other environmental damage
+        Module pvpModule = getPlugin().getModuleManager().getModule(ModuleType.PVP_SWORD);
+        boolean inPvPMode = false;
+        if (pvpModule instanceof net.zithium.deluxehub.module.modules.hotbar.PvPSwordModule pvpSword) {
+            inPvPMode = pvpSword.isInPvPMode(player);
+        }
+
         EntityDamageEvent.DamageCause cause = event.getCause();
         if (fallDamage && cause == EntityDamageEvent.DamageCause.FALL) {
             event.setCancelled(true);
         } else if (playerDrowning && cause == EntityDamageEvent.DamageCause.DROWNING) {
             event.setCancelled(true);
         } else if (fireDamage && (cause == EntityDamageEvent.DamageCause.FIRE || cause == EntityDamageEvent.DamageCause.FIRE_TICK || cause == EntityDamageEvent.DamageCause.LAVA)) {
-            event.setCancelled(true);
+            // Allow fire damage for PvP mode players
+            if (!inPvPMode) {
+                event.setCancelled(true);
+            }
         } else if (voidDeath && cause == EntityDamageEvent.DamageCause.VOID) {
             player.setFallDistance(0.0F);
 
@@ -375,6 +414,14 @@ public class WorldProtect extends Module {
 
         if (inDisabledWorld(player.getLocation())) {
             return;
+        }
+
+        // Allow hunger loss for PvP mode players
+        Module pvpModule = getPlugin().getModuleManager().getModule(ModuleType.PVP_SWORD);
+        if (pvpModule instanceof net.zithium.deluxehub.module.modules.hotbar.PvPSwordModule pvpSword) {
+            if (pvpSword.isInPvPMode(player)) {
+                return; // Allow hunger changes for PvP mode players
+            }
         }
 
         event.setCancelled(true);
@@ -475,8 +522,8 @@ public class WorldProtect extends Module {
         event.setDeathMessage(null);
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onEntityDamage(EntityDamageByEntityEvent event) {
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPvPDamage(EntityDamageByEntityEvent event) {
         if (!playerPvP) {
             return;
         }
@@ -489,13 +536,35 @@ public class WorldProtect extends Module {
             return;
         }
 
-        if (event.getDamager().hasPermission(Permissions.EVENT_PLAYER_PVP.getPermission())) {
-            return;
+        // Get the actual attacker (handle projectiles)
+        Player attacker = null;
+        if (event.getDamager() instanceof Player) {
+            attacker = (Player) event.getDamager();
+        } else if (event.getDamager() instanceof org.bukkit.entity.Projectile projectile) {
+            if (projectile.getShooter() instanceof Player) {
+                attacker = (Player) projectile.getShooter();
+            }
         }
 
+        // Check if PvP Sword module is enabled and both players are in PvP mode
+        if (attacker != null) {
+            Module pvpModule = getPlugin().getModuleManager().getModule(ModuleType.PVP_SWORD);
+            if (pvpModule instanceof net.zithium.deluxehub.module.modules.hotbar.PvPSwordModule pvpSword) {
+                if (pvpSword.isInPvPMode(player) && pvpSword.isInPvPMode(attacker)) {
+                    return; // Allow damage - both in PvP mode
+                }
+            }
+
+            // Check permission bypass
+            if (attacker.hasPermission(Permissions.EVENT_PLAYER_PVP.getPermission())) {
+                return;
+            }
+        }
+
+        // Block the damage and send message to the ATTACKER (not victim)
         event.setCancelled(true);
-        if (tryCooldown(player.getUniqueId(), CooldownType.PLAYER_PVP, 3)) {
-            Messages.EVENT_PLAYER_PVP.send(player);
+        if (attacker != null && tryCooldown(attacker.getUniqueId(), CooldownType.PLAYER_PVP, 3)) {
+            Messages.EVENT_PLAYER_PVP.send(attacker);
         }
     }
 }

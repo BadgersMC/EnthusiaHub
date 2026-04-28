@@ -14,7 +14,6 @@ import net.zithium.deluxehub.module.ModuleType;
 import net.zithium.deluxehub.module.modules.hologram.Hologram;
 import net.zithium.deluxehub.module.modules.hotbar.HotbarItem;
 import net.zithium.deluxehub.module.modules.hotbar.HotbarManager;
-import net.zithium.deluxehub.module.modules.visual.scoreboard.ScoreboardManager;
 import net.zithium.deluxehub.module.modules.world.LobbySpawn;
 import net.zithium.deluxehub.utility.TextUtil;
 import net.zithium.library.utils.ColorUtil;
@@ -101,37 +100,6 @@ public class DeluxeHubCommand {
         }
 
 		/*
-		Command: scoreboard
-		Description: toggles the scoreboard on/off
-		*/
-        else if (args.getString(0).equalsIgnoreCase("scoreboard")) {
-
-            if (!(sender instanceof Player player)) {
-                throw new CommandException("Console cannot toggle the scoreboard");
-            }
-
-            if (!sender.hasPermission(Permissions.COMMAND_SCOREBOARD_TOGGLE.getPermission())) {
-                Messages.NO_PERMISSION.send(sender);
-                return;
-            }
-
-            if (!plugin.getModuleManager().isEnabled(ModuleType.SCOREBOARD)) {
-                sender.sendMessage(ColorUtil.color("&cThe scoreboard module is not enabled in the configuration."));
-                return;
-            }
-
-            ScoreboardManager scoreboardManager = ((ScoreboardManager) plugin.getModuleManager().getModule(ModuleType.SCOREBOARD));
-
-            if (scoreboardManager.hasScore(player.getUniqueId())) {
-                scoreboardManager.removeScoreboard(player);
-                Messages.SCOREBOARD_TOGGLE.send(player, "%value%", "disabled");
-            } else {
-                scoreboardManager.createScoreboard(player);
-                Messages.SCOREBOARD_TOGGLE.send(player, "%value%", "enabled");
-            }
-        }
-
-		/*
 		Command: info
 		Description: displays useful information about the configuration
 		*/
@@ -159,9 +127,6 @@ public class DeluxeHubCommand {
 
             HotbarManager hotbarManager = ((HotbarManager) plugin.getModuleManager().getModule(ModuleType.HOTBAR_ITEMS));
             sender.sendMessage(ColorUtil.color("&7Hotbar items (" + hotbarManager.getHotbarItems().size() + ")" + " &8- &a" + (hotbarManager.getHotbarItems().stream().map(HotbarItem::getKey).collect(Collectors.joining(", ")))));
-
-            CommandManager commandManager = plugin.getCommandManager();
-            sender.sendMessage(ColorUtil.color("&7Custom commands (" + commandManager.getCustomCommands().size() + ")" + " &8- &a" + (commandManager.getCustomCommands().stream().map(command -> command.getAliases().get(0)).collect(Collectors.joining(", ")))));
 
             sender.sendMessage("");
 

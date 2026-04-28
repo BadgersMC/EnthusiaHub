@@ -6,11 +6,9 @@ import cl.bgmp.minecraft.util.commands.CommandsManager;
 import cl.bgmp.minecraft.util.commands.exceptions.CommandException;
 import cl.bgmp.minecraft.util.commands.injection.SimpleInjector;
 import net.zithium.deluxehub.DeluxeHubPlugin;
-import net.zithium.deluxehub.command.commands.ClearchatCommand;
 import net.zithium.deluxehub.command.commands.DeluxeHubCommand;
 import net.zithium.deluxehub.command.commands.FlyCommand;
 import net.zithium.deluxehub.command.commands.LobbyCommand;
-import net.zithium.deluxehub.command.commands.LockchatCommand;
 import net.zithium.deluxehub.command.commands.SetLobbyCommand;
 import net.zithium.deluxehub.command.commands.VanishCommand;
 import net.zithium.deluxehub.command.commands.gamemode.AdventureCommand;
@@ -22,9 +20,6 @@ import net.zithium.deluxehub.config.ConfigType;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class CommandManager {
 
     private final DeluxeHubPlugin plugin;
@@ -33,12 +28,9 @@ public class CommandManager {
     private CommandsManager commands;
     private CommandsManagerRegistration commandRegistry;
 
-    private final List<CustomCommand> customCommands;
-
     public CommandManager(DeluxeHubPlugin plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfigManager().getFile(ConfigType.COMMANDS).getConfig();
-        this.customCommands = new ArrayList<>();
     }
 
     public void reload() {
@@ -57,37 +49,10 @@ public class CommandManager {
 
             registerCommand(command, config.getStringList("commands." + command + ".aliases").toArray(new String[0]));
         }
-
-        reloadCustomCommands();
     }
 
     public void execute(String cmd, String[] args, CommandSender sender) throws CommandException {
         commands.execute(cmd, args, sender, sender);
-    }
-
-    public void reloadCustomCommands() {
-        if (!customCommands.isEmpty()) {
-            customCommands.clear();
-        }
-
-        if (!config.isSet("custom_commands")) {
-            return;
-        }
-
-        for (String entry : config.getConfigurationSection("custom_commands").getKeys(false)) {
-
-            CustomCommand customCommand = new CustomCommand(entry, config.getStringList("custom_commands." + entry + ".actions"));
-
-            if (config.contains("custom_commands." + entry + ".aliases")) {
-                customCommand.addAliases(config.getStringList("custom_commands." + entry + ".aliases"));
-            }
-
-            if (config.contains("custom_commands." + entry + ".permission")) {
-                customCommand.setPermission(config.getString("custom_commands." + entry + ".permission"));
-            }
-
-            customCommands.add(customCommand);
-        }
     }
 
     private void registerCommand(String cmd, String[] aliases) {
@@ -97,16 +62,10 @@ public class CommandManager {
             case "GMC" -> commandRegistry.register(CreativeCommand.class, aliases);
             case "GMA" -> commandRegistry.register(AdventureCommand.class, aliases);
             case "GMSP" -> commandRegistry.register(SpectatorCommand.class, aliases);
-            case "CLEARCHAT" -> commandRegistry.register(ClearchatCommand.class, aliases);
             case "FLY" -> commandRegistry.register(FlyCommand.class, aliases);
-            case "LOCKCHAT" -> commandRegistry.register(LockchatCommand.class, aliases);
             case "SETLOBBY" -> commandRegistry.register(SetLobbyCommand.class, aliases);
             case "LOBBY" -> commandRegistry.register(LobbyCommand.class, aliases);
             case "VANISH" -> commandRegistry.register(VanishCommand.class, aliases);
         }
-    }
-
-    public List<CustomCommand> getCustomCommands() {
-        return customCommands;
     }
 }

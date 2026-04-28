@@ -17,6 +17,7 @@ repositories {
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://libraries.minecraft.net/")
     maven("https://repo.maven.apache.org/maven2/")
+    maven("https://repo.opencollab.dev/main/") // Floodgate & Cumulus
 }
 
 dependencies {
@@ -34,6 +35,8 @@ dependencies {
     compileOnly("net.md-5:bungeecord-chat:1.16-R0.1")
     compileOnly("com.mojang:authlib:1.5.21")
     compileOnly("me.clip:placeholderapi:2.11.6")
+    compileOnly("org.geysermc.floodgate:api:2.2.3-SNAPSHOT")
+    compileOnly("org.geysermc.cumulus:cumulus:1.1.2")
 }
 
 tasks {
@@ -55,6 +58,7 @@ tasks {
         }
 
         archiveClassifier.set("") // Removes "-all" suffix
+        archiveBaseName.set("EnthusiaHub")
 
         relocate("org.bstats", "net.zithium.deluxehub.libs.metrics")
         relocate("cl.bgmp", "net.zithium.deluxehub.libs.command")

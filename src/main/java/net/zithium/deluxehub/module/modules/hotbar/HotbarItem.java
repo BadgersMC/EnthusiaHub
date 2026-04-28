@@ -14,6 +14,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -110,7 +111,7 @@ public abstract class HotbarItem implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!allowMovement) {
+        if (allowMovement) {
             return;
         }
 
@@ -124,7 +125,24 @@ public abstract class HotbarItem implements Listener {
             return;
         }
 
-        if (event.getSlot() == slot && new NBTItem(clicked).getString("hotbarItem").equals(key)) {
+        if (new NBTItem(clicked).getString("hotbarItem").equals(key)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onItemDrop(PlayerDropItemEvent event) {
+        if (allowMovement) {
+            return;
+        }
+
+        Player player = event.getPlayer();
+        if (getHotbarManager().inDisabledWorld(player.getLocation())) {
+            return;
+        }
+
+        ItemStack dropped = event.getItemDrop().getItemStack();
+        if (new NBTItem(dropped).getString("hotbarItem").equals(key)) {
             event.setCancelled(true);
         }
     }

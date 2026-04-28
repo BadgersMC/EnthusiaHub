@@ -16,6 +16,8 @@ import net.zithium.deluxehub.config.Messages;
 import net.zithium.deluxehub.cooldown.CooldownManager;
 import net.zithium.deluxehub.hook.HooksManager;
 import net.zithium.deluxehub.inventory.InventoryManager;
+import net.zithium.deluxehub.menu.bedrock.FloodgatePlatformDetection;
+import net.zithium.deluxehub.menu.bedrock.FormStateManager;
 import net.zithium.deluxehub.module.ModuleManager;
 import net.zithium.deluxehub.module.ModuleType;
 import net.zithium.deluxehub.module.modules.hologram.HologramManager;
@@ -29,9 +31,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class DeluxeHubPlugin extends JavaPlugin {
 
+    private static DeluxeHubPlugin instance;
     private static PlatformScheduler scheduler;
 
     private static final int BSTATS_ID = 26336;
+
+    public static DeluxeHubPlugin getInstance() {
+        return instance;
+    }
 
     public static PlatformScheduler scheduler() {
         return scheduler;
@@ -44,9 +51,12 @@ public class DeluxeHubPlugin extends JavaPlugin {
     private CooldownManager cooldownManager;
     private ModuleManager moduleManager;
     private InventoryManager inventoryManager;
+    private FloodgatePlatformDetection platformDetection;
+    private FormStateManager formStateManager;
 
     @Override
     public void onEnable() {
+        instance = this;
         long start = System.currentTimeMillis();
 
         getLogger().info(" _   _            _          _    _ ");
@@ -95,6 +105,11 @@ public class DeluxeHubPlugin extends JavaPlugin {
 
         inventoryManager = new InventoryManager();
         inventoryManager.onEnable(this);
+
+        // Initialize Bedrock menu system
+        platformDetection = new FloodgatePlatformDetection(this);
+        int stateExpirationMinutes = getConfig().getInt("bedrock_menus.state_expiration_minutes", 30);
+        formStateManager = new FormStateManager(stateExpirationMinutes);
 
         moduleManager = new ModuleManager();
         moduleManager.loadModules(this);
@@ -200,5 +215,13 @@ public class DeluxeHubPlugin extends JavaPlugin {
 
     public ActionManager getActionManager() {
         return actionManager;
+    }
+
+    public FloodgatePlatformDetection getPlatformDetection() {
+        return platformDetection;
+    }
+
+    public FormStateManager getFormStateManager() {
+        return formStateManager;
     }
 }

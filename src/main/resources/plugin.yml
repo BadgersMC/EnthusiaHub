@@ -1,10 +1,10 @@
 name: ${name}
-authors: ["Strafbefehl", "ItsLewizzz"]
+authors: ["BadgersMC", "Strafbefehl", "ItsLewizzz"]
 version: ${version}
 description: ${description}
 website: ${url}
 api-version: '1.21'
-main: dev.strafbefehl.deluxehubreloaded.DeluxeHubPlugin
+main: gg.badgersmc.enthusiahub.EnthusiaHubPlugin
 loadbefore: [Essentials]
 softdepend: [PlaceholderAPI, HeadDatabase, Multiverse-Core, floodgate]
 permissions:

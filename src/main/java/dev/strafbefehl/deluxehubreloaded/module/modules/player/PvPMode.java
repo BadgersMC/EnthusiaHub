@@ -255,6 +255,10 @@ public class PvPMode extends Module {
 		if (!(ev.getEntity() instanceof Player)) return;
 		Player attacker = (Player) ev.getDamager();
 		Player target = (Player) ev.getEntity();
+		if (attacker.hasPermission(dev.strafbefehl.deluxehubreloaded.Permissions.PVP_BYPASS.getPermission())
+				|| target.hasPermission(dev.strafbefehl.deluxehubreloaded.Permissions.PVP_BYPASS.getPermission())) {
+			return;
+		}
 		if (!_players.contains(attacker.getUniqueId()) || !_players.contains(target.getUniqueId())) {
 			ev.setCancelled(true);
 		}

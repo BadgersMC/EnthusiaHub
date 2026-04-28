@@ -26,6 +26,7 @@ public enum Permissions {
 	LOCK_CHAT_BYPASS("bypass.lockchat"),
 	ANTI_WDL_BYPASS("bypass.antiwdl"),
 	DOUBLE_JUMP_BYPASS("bypass.doublejump"),
+	PVP_BYPASS("bypass.pvp"),
 
 	ANTI_WDL_NOTIFY("alert.antiwdl"),
 	ANTI_SWEAR_NOTIFY("alert.antiswear"),

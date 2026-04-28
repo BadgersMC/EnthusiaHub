@@ -387,6 +387,16 @@ public class WorldProtect extends Module {
 
         if (inDisabledWorld(victim.getLocation())) return;
 
+        // BadgersMC: bypass for minigames (LumaSG etc.)
+        if (victim.hasPermission(Permissions.PVP_BYPASS.getPermission())) return;
+        if (event.getDamager() instanceof Player
+                && event.getDamager().hasPermission(Permissions.PVP_BYPASS.getPermission())) return;
+        if (event.getDamager() instanceof Projectile) {
+            Projectile proj = (Projectile) event.getDamager();
+            if (proj.getShooter() instanceof Player
+                    && ((Player) proj.getShooter()).hasPermission(Permissions.PVP_BYPASS.getPermission())) return;
+        }
+
         if (event.getDamager() instanceof Player) {
             Player attacker = (Player) event.getDamager();
             if (config.getBoolean("pvp_mode.enabled")) {

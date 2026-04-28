@@ -41,6 +41,10 @@ permissions:
       deluxehub.bypass.lockchat: true
       deluxehub.bypass.antiwdl: true
       deluxehub.bypass.doublejump: false
+      deluxehub.bypass.pvp: false
+  deluxehub.bypass.pvp:
+    description: Bypass hub PvP cancellation (for minigames like LumaSG)
+    default: false
   deluxehub.alert.*:
     description: Gives access to all alert permissions
     children:

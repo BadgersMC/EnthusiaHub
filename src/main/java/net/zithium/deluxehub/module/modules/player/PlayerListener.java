@@ -114,7 +114,7 @@ public class PlayerListener extends Module {
         // Heal the player (unless in PvP mode)
         if (spawnHeal && !inPvPMode) {
             player.setFoodLevel(20);
-            player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+            player.setHealth(player.getAttribute(Attribute.MAX_HEALTH).getValue());
         }
 
         // Extinguish (unless in PvP mode)

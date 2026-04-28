@@ -15,7 +15,7 @@ import net.zithium.deluxehub.action.actions.ProxyAction;
 import net.zithium.deluxehub.action.actions.SoundAction;
 import net.zithium.deluxehub.action.actions.TitleAction;
 import net.zithium.deluxehub.utility.PlaceholderUtil;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;

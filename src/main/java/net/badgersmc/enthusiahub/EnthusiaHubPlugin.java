@@ -1,0 +1,244 @@
+package net.badgersmc.enthusiahub;
+
+import cl.bgmp.minecraft.util.commands.exceptions.*;
+import net.badgersmc.enthusiahub.action.ActionManager;
+import net.badgersmc.enthusiahub.module.modules.world.BuildMode;
+import net.badgersmc.enthusiahub.command.CommandManager;
+import net.badgersmc.enthusiahub.config.ConfigManager;
+import net.badgersmc.enthusiahub.config.ConfigType;
+import net.badgersmc.enthusiahub.config.Messages;
+import net.badgersmc.enthusiahub.config.Version;
+import net.badgersmc.enthusiahub.cooldown.CooldownManager;
+import net.badgersmc.enthusiahub.hook.HooksManager;
+import net.badgersmc.enthusiahub.inventory.InventoryManager;
+import net.badgersmc.enthusiahub.menu.bedrock.FloodgatePlatformDetection;
+import net.badgersmc.enthusiahub.menu.bedrock.FormStateManager;
+import net.badgersmc.enthusiahub.module.ModuleManager;
+import net.badgersmc.enthusiahub.module.ModuleType;
+import net.badgersmc.enthusiahub.module.modules.hologram.HologramManager;
+import net.badgersmc.enthusiahub.utility.NamespacedKeys;
+import net.badgersmc.enthusiahub.utility.UpdateChecker;
+import org.bstats.bukkit.MetricsLite;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.event.HandlerList;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.logging.Level;
+
+public class EnthusiaHubPlugin extends JavaPlugin {
+
+	private static final int BSTATS_ID = 23061;
+	private static EnthusiaHubPlugin instance;
+
+	public static EnthusiaHubPlugin getInstance() {
+		return instance;
+	}
+
+	private ConfigManager configManager;
+	private ActionManager actionManager;
+	private HooksManager hooksManager;
+	private CommandManager commandManager;
+	private CooldownManager cooldownManager;
+	private ModuleManager moduleManager;
+	private InventoryManager inventoryManager;
+	private FloodgatePlatformDetection platformDetection;
+	private FormStateManager formStateManager;
+	private Version currentVersion;
+
+	public void onEnable() {
+		instance = this;
+		long start = System.currentTimeMillis();
+		getLogger().log(Level.INFO, "Based on original code from DeluxeHub");
+		getLogger().log(Level.INFO, "Modified, and maintained by Strafbefehl, 2025");
+
+		// Check server version
+		if (Bukkit.getVersion().contains("1.13") || Bukkit.getVersion().contains("1.14") ||
+				Bukkit.getVersion().contains("1.15") || Bukkit.getVersion().contains("1.16") ||
+				Bukkit.getVersion().contains("1.17") || Bukkit.getVersion().contains("1.18") ||
+				Bukkit.getVersion().contains("1.19") || Bukkit.getVersion().contains("1.20")) {
+			getLogger().severe("============= UNSUPPORTED SERVER VERSION =============");
+			getLogger().severe("DeluxeHubReloaded requires at least Spigot 1.21 to run.");
+			getLogger().severe("Please update your server to a newer version.");
+			getLogger().severe("The plugin will now disable.");
+			getLogger().severe("============= UNSUPPORTED SERVER VERSION =============");
+			getPluginLoader().disablePlugin(this);
+			return;
+		}
+
+		// Check if using Spigot
+		try {
+			Class.forName("org.spigotmc.SpigotConfig");
+		} catch (ClassNotFoundException ex) {
+			getLogger().severe("============= SPIGOT NOT DETECTED =============");
+			getLogger().severe("DeluxeHubReloaded requires Spigot to run, you can download");
+			getLogger().severe("Spigot here: https://www.spigotmc.org/wiki/spigot-installation/.");
+			getLogger().severe("The plugin will now disable.");
+			getLogger().severe("============= SPIGOT NOT DETECTED =============");
+			getPluginLoader().disablePlugin(this);
+			return;
+		}
+
+		// Enable bStats metrics
+		new MetricsLite(this, BSTATS_ID);
+
+		NamespacedKeys.registerKeys();
+
+		// Check plugin hooks
+		hooksManager = new HooksManager(this);
+
+		// Load config files
+		configManager = new ConfigManager();
+		configManager.loadFiles(this);
+
+		// If there were any configuration errors we should not continue
+		if (!getServer().getPluginManager().isPluginEnabled(this)) return;
+
+		// Command manager
+		commandManager = new CommandManager(this);
+		commandManager.reload();
+
+		// Cooldown manager
+		cooldownManager = new CooldownManager();
+
+		// Inventory (GUI) manager
+		inventoryManager = new InventoryManager();
+		if (!hooksManager.isHookEnabled("HEAD_DATABASE")) inventoryManager.onEnable(this);
+
+		// Initialize Bedrock menu system (safe even when Floodgate absent)
+		platformDetection = new FloodgatePlatformDetection(this);
+		int stateExpirationMinutes = getConfig().getInt("bedrock_menus.state_expiration_minutes", 30);
+		formStateManager = new FormStateManager(stateExpirationMinutes);
+
+		// Core plugin modules
+		moduleManager = new ModuleManager();
+		moduleManager.loadModules(this);
+
+		// Action system
+		actionManager = new ActionManager(this);
+
+		//BuildMode manager
+		BuildMode.getInstance();
+
+		// Load update checker (if enabled)
+		if (getConfigManager().getFile(ConfigType.SETTINGS).getConfig().getBoolean("check-updates"))
+			new UpdateChecker(this).checkForUpdate();
+
+		// Register BungeeCord channels
+		getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+
+		getLogger().log(Level.INFO, "");
+		getLogger().log(Level.INFO, "Successfully loaded in " + (System.currentTimeMillis() - start) + "ms");
+
+		currentVersion = Version.parse(getDescription().getVersion());
+
+		// Initialize and load configurations
+		configManager = new ConfigManager();
+		configManager.loadFiles(this);
+
+		if (IsCompatible()) {
+			getLogger().severe("============= NOT RECOMMENDED SERVER VERSION =============");
+			getLogger().severe("DeluxeHubReloaded requires at least Spigot 1.21.3 to run without issues.");
+			getLogger().severe("Please consider to update your server to a newer version.");
+			getLogger().severe("PvP Mode, Teleportation Bow and some sounds are missing or disabled");
+			getLogger().severe("============= NOT RECOMMENDED SERVER VERSION =============");
+		}
+	}
+
+	public void onDisable() {
+		Bukkit.getScheduler().cancelTasks(this);
+		moduleManager.unloadModules();
+		inventoryManager.onDisable();
+		//configManager.saveFiles();
+	}
+
+	public void reload() {
+		Bukkit.getScheduler().cancelTasks(this);
+		HandlerList.unregisterAll(this);
+
+		configManager.reloadFiles();
+
+		BuildMode.getInstance().runScheduler();
+
+		inventoryManager.onDisable();
+		inventoryManager.onEnable(this);
+
+		getCommandManager().reload();
+
+		moduleManager.loadModules(this);
+	}
+
+	@Override
+	public boolean onCommand(@NotNull CommandSender sender, org.bukkit.command.Command cmd, @NotNull String commandLabel, String[] args) {
+		try {
+			getCommandManager().execute(cmd.getName(), args, sender);
+		} catch (CommandPermissionsException e) {
+			Messages.NO_PERMISSION.send(sender);
+		} catch (MissingNestedCommandException e) {
+			sender.sendMessage(ChatColor.RED + e.getUsage());
+		} catch (CommandUsageException e) {
+			sender.sendMessage(ChatColor.RED + "Usage: " + e.getUsage());
+		} catch (WrappedCommandException e) {
+			if (e.getCause() instanceof NumberFormatException) {
+				sender.sendMessage(ChatColor.RED + "Number expected, string received instead.");
+			} else {
+				sender.sendMessage(ChatColor.RED + "An internal error has occurred. See console.");
+				e.printStackTrace();
+			}
+		} catch (CommandException e) {
+			sender.sendMessage(ChatColor.RED + e.getMessage());
+		}
+		return true;
+	}
+
+	public static boolean IsCompatible() {
+		String version = Bukkit.getBukkitVersion().split("-")[0];
+		return version.equals("1.21") || version.equals("1.21.1") || version.equals("1.21.2");
+	}
+
+	public HologramManager getHologramManager() {
+		return (HologramManager) moduleManager.getModule(ModuleType.HOLOGRAMS);
+	}
+
+	public HooksManager getHookManager() {
+		return hooksManager;
+	}
+
+	public ModuleManager getModuleManager() {
+		return moduleManager;
+	}
+
+	public CommandManager getCommandManager() {
+		return commandManager;
+	}
+
+	public CooldownManager getCooldownManager() {
+		return cooldownManager;
+	}
+
+	public InventoryManager getInventoryManager() {
+		return inventoryManager;
+	}
+
+	public ConfigManager getConfigManager() {
+		return configManager;
+	}
+
+	public Version getCurrentVersion() {
+		return currentVersion;
+	}
+
+	public ActionManager getActionManager() {
+		return actionManager;
+	}
+
+	public FloodgatePlatformDetection getPlatformDetection() {
+		return platformDetection;
+	}
+
+	public FormStateManager getFormStateManager() {
+		return formStateManager;
+	}
+}

@@ -4,7 +4,7 @@ version: ${version}
 description: ${description}
 website: ${url}
 api-version: '1.21'
-main: gg.badgersmc.enthusiahub.EnthusiaHubPlugin
+main: net.badgersmc.enthusiahub.EnthusiaHubPlugin
 loadbefore: [Essentials]
 softdepend: [PlaceholderAPI, HeadDatabase, Multiverse-Core, floodgate]
 permissions:

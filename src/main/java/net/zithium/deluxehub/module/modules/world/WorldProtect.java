@@ -522,7 +522,7 @@ public class WorldProtect extends Module {
         event.setDeathMessage(null);
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.HIGH)
     public void onPvPDamage(EntityDamageByEntityEvent event) {
         if (!playerPvP) {
             return;
@@ -548,6 +548,11 @@ public class WorldProtect extends Module {
 
         // Check if PvP Sword module is enabled and both players are in PvP mode
         if (attacker != null) {
+            // Minigame bypass (LumaSG grants this permission during active games)
+            if (attacker.hasPermission(Permissions.PVP_BYPASS.getPermission())) {
+                return;
+            }
+
             Module pvpModule = getPlugin().getModuleManager().getModule(ModuleType.PVP_SWORD);
             if (pvpModule instanceof net.zithium.deluxehub.module.modules.hotbar.PvPSwordModule pvpSword) {
                 if (pvpSword.isInPvPMode(player) && pvpSword.isInPvPMode(attacker)) {
@@ -555,7 +560,7 @@ public class WorldProtect extends Module {
                 }
             }
 
-            // Check permission bypass
+            // Admin bypass
             if (attacker.hasPermission(Permissions.EVENT_PLAYER_PVP.getPermission())) {
                 return;
             }

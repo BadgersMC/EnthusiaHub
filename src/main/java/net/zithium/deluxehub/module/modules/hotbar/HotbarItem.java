@@ -12,6 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -121,12 +122,19 @@ public abstract class HotbarItem implements Listener {
         }
 
         ItemStack clicked = event.getCurrentItem();
-        if (clicked == null || clicked.getType() == Material.AIR) {
-            return;
+        if (clicked != null && clicked.getType() != Material.AIR) {
+            if (new NBTItem(clicked).getString("hotbarItem").equals(key)) {
+                event.setCancelled(true);
+                return;
+            }
         }
 
-        if (new NBTItem(clicked).getString("hotbarItem").equals(key)) {
-            event.setCancelled(true);
+        // Also block dragging a hotbar item onto another slot via cursor
+        ItemStack cursor = event.getCursor();
+        if (cursor != null && cursor.getType() != Material.AIR) {
+            if (new NBTItem(cursor).getString("hotbarItem").equals(key)) {
+                event.setCancelled(true);
+            }
         }
     }
 
@@ -145,6 +153,18 @@ public abstract class HotbarItem implements Listener {
         if (new NBTItem(dropped).getString("hotbarItem").equals(key)) {
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (allowMovement) {
+            return;
+        }
+
+        event.getDrops().removeIf(drop ->
+            drop != null && drop.getType() != Material.AIR &&
+            new NBTItem(drop).getString("hotbarItem").equals(key)
+        );
     }
 
     @EventHandler

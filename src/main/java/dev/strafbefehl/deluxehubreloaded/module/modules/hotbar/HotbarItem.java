@@ -12,6 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.EquipmentSlot;
@@ -120,15 +121,46 @@ public abstract class HotbarItem implements Listener {
 		Player player = (Player) event.getWhoClicked();
 		if (getHotbarManager().inDisabledWorld(player.getLocation())) return;
 
-		ItemStack clicked = event.getCurrentItem();
-		if (clicked == null || clicked.getType() == Material.AIR) return;
+		NamespacedKey nbtKey = new NamespacedKey(getPlugin(), "hotbarItem");
 
-		ItemMeta meta = clicked.getItemMeta();
-		if (meta != null) {
-			String hotbarItem = meta.getPersistentDataContainer().get(new NamespacedKey(getPlugin(), "hotbarItem"), PersistentDataType.STRING);
-			if (hotbarItem != null && event.getSlot() == slot && hotbarItem.equals(key))
-				event.setCancelled(true);
+		ItemStack clicked = event.getCurrentItem();
+		if (clicked != null && clicked.getType() != Material.AIR) {
+			ItemMeta meta = clicked.getItemMeta();
+			if (meta != null) {
+				String hotbarItem = meta.getPersistentDataContainer().get(nbtKey, PersistentDataType.STRING);
+				if (hotbarItem != null && event.getSlot() == slot && hotbarItem.equals(key)) {
+					event.setCancelled(true);
+					return;
+				}
+			}
 		}
+
+		ItemStack cursor = event.getCursor();
+		if (cursor != null && cursor.getType() != Material.AIR) {
+			ItemMeta cursorMeta = cursor.getItemMeta();
+			if (cursorMeta != null) {
+				String cursorKey = cursorMeta.getPersistentDataContainer().get(nbtKey, PersistentDataType.STRING);
+				if (cursorKey != null && cursorKey.equals(key)) {
+					event.setCancelled(true);
+				}
+			}
+		}
+	}
+
+	@EventHandler
+	public void onPlayerDeath(PlayerDeathEvent event) {
+		if (!allowMovement) return;
+		if (BuildMode.getInstance().isPresent(event.getEntity().getUniqueId())) return;
+		if (getHotbarManager().inDisabledWorld(event.getEntity().getLocation())) return;
+
+		NamespacedKey nbtKey = new NamespacedKey(getPlugin(), "hotbarItem");
+		event.getDrops().removeIf(drop -> {
+			if (drop == null || drop.getType() == Material.AIR) return false;
+			ItemMeta meta = drop.getItemMeta();
+			if (meta == null) return false;
+			String dropKey = meta.getPersistentDataContainer().get(nbtKey, PersistentDataType.STRING);
+			return dropKey != null && dropKey.equals(key);
+		});
 	}
 
 	@EventHandler

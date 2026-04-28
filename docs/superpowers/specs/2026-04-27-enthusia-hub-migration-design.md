@@ -1,8 +1,18 @@
-# EnthusiaHub Migration Design
+# EnthusiaHub Design
 
 **Date:** 2026-04-27
-**Project:** EnthusiaHub (BadgersMC fork of DeluxeHub)
+**Project:** EnthusiaHub — BadgersMC in-house hub plugin
 **Status:** Approved
+
+---
+
+## Context (Read First)
+
+EnthusiaHub started as a fork of [ItsLewizzz/DeluxeHub](https://github.com/ItsLewizzz/DeluxeHub) via [FreshSMP/DeluxeHub](https://github.com/FreshSMP/DeluxeHub). **The upstream is dead** — last upstream commit was 1.20 support. Our fork is 18 commits ahead with no upstream activity. There is no base to stay compatible with.
+
+This means Phase 2 is not a migration — it is a **greenfield BadgersMC plugin** that happens to share feature parity with the current Java codebase. EnthusiaHub is fully owned by BadgersMC. All architectural decisions, naming, and conventions are ours.
+
+The Phase 1 Java codebase at `D:/BadgersMC-Dev/DeluxeHub` is a **temporary working hub** — kept alive only until Phase 2 reaches feature parity, then retired.
 
 ---
 
@@ -10,8 +20,8 @@
 
 Two-phase plan for EnthusiaHub:
 
-- **Phase 1 (immediate):** Java patch — fix three bug clusters and update to Paper 1.21.11. Fastest path to a working hub.
-- **Phase 2 (future):** Full in-house Kotlin rewrite using nexus-paper, InventoryFramework (IF), and SPEAR architecture. Returns all development under BadgersMC control.
+- **Phase 1 (immediate):** Java patch — fix three bug clusters and update to Paper 1.21.11. Fastest path to a working hub on the live server.
+- **Phase 2 (future):** Greenfield Kotlin rewrite in a new repo (`BadgersMC/EnthusiaHub`) using nexus-paper, InventoryFramework (IF), and SPEAR architecture. This is the permanent, in-house version.
 
 ---
 
@@ -84,9 +94,9 @@ Fixed by the same negation in 1.3. No additional changes needed once 1.3 is appl
 
 ---
 
-## Phase 2 — Kotlin + Nexus Rewrite
+## Phase 2 — Greenfield Kotlin Rewrite
 
-> Blueprint for a future, from-scratch EnthusiaHub in BadgersMC's standard in-house stack. Build in a new repo (`BadgersMC/EnthusiaHub-Kotlin`), deploy when feature-parity is confirmed, retire the Java fork.
+> This is a new BadgersMC plugin, not a port. The Java fork is a reference for feature parity only — its architecture, conventions, and upstream lineage are irrelevant. Build in a new repo (`BadgersMC/EnthusiaHub`). When feature parity is confirmed on staging, retire the Java fork entirely.
 
 ### 2.1 Stack
 
@@ -203,15 +213,16 @@ infrastructure/
 
 ---
 
-### 2.6 Migration Checklist (Phase 2 Gate)
+### 2.6 Phase 2 Gate — Before Retiring Java Fork
 
-Before retiring the Java fork, verify:
+The Java fork is the reference for what features exist, not how they should be built. Before retiring it:
 
-- [ ] All Phase 1 bug fixes are replicated correctly in Phase 2 codebase
-- [ ] Feature parity with Java fork: all modules, all commands, all menus
-- [ ] SPEAR requirements doc written and all REQ- IDs covered by tests
-- [ ] LumaSG bypass verified on staging server
+- [ ] SPEAR `requirements.md` written for EnthusiaHub — all features from Java fork captured as REQ- IDs
+- [ ] All REQ- IDs covered by failing tests before implementation begins (SPEAR TDD rule)
+- [ ] Feature parity confirmed on staging: all modules, commands, menus
+- [ ] PvP sword + `enthusia.pvp.bypass` verified with LumaSG on staging server
 - [ ] No Folia-incompatible scheduling
+- [ ] Java fork repo archived (not deleted) for historical reference
 
 ---
 
@@ -219,8 +230,11 @@ Before retiring the Java fork, verify:
 
 | Decision | Reason |
 |---|---|
-| Incremental not big-bang | Need working hub fast |
+| Phase 1 Java patch, not rewrite | Need working hub fast — Phase 2 is permanent solution |
+| Phase 2 is greenfield, not a port | Upstream (ItsLewizzz/DeluxeHub) is dead. No compatibility obligation. Own the architecture fully. |
+| New repo for Phase 2 (`BadgersMC/EnthusiaHub`) | Clean slate, no upstream git history, no fork conventions |
+| Java fork archived not deleted | Historical reference for feature list during Phase 2 SPEAR spec writing |
 | Keep FoliaLib in Phase 2 | Folia support required, no equivalent in nexus-paper yet |
-| IF over custom inventory | Team familiar, actively maintained, supports 1.21+ |
-| Lazy init for PvPSwordModule | Eliminates fragile module init-order dependency |
-| `enthusia.pvp.bypass` permission | Clean seam for LumaSG without coupling plugins |
+| IF over custom inventory | Team familiar from LumaGuilds, actively maintained, supports 1.21+ |
+| Lazy init for PvPSwordModule | Eliminates fragile module init-order dependency in Phase 1 |
+| `enthusia.pvp.bypass` permission | Clean seam for LumaSG without coupling plugins — carried into Phase 2 |

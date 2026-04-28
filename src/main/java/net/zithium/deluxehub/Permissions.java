@@ -25,6 +25,7 @@ public enum Permissions {
     EVENT_ITEM_DROP("item.drop"),
     EVENT_ITEM_PICKUP("item.pickup"),
     EVENT_PLAYER_PVP("player.pvp"),
+    PVP_BYPASS("bypass.pvp"),
     EVENT_BLOCK_INTERACT("block.interact"),
     EVENT_BLOCK_BREAK("block.break"),
     EVENT_BLOCK_PLACE("block.place");

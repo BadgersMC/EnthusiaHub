@@ -35,6 +35,7 @@ permissions:
     children:
       deluxehub.bypass.antiwdl: true
       deluxehub.bypass.doublejump: false
+      deluxehub.bypass.pvp: false
   deluxehub.alert.*:
     description: Gives access to all alert permissions
     children:

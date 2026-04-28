@@ -5,7 +5,7 @@ plugins {
 
 group = "net.zithium"
 version = "3.8.0"
-description = "DeluxeHub"
+description = "EnthusiaHub"
 
 repositories {
     mavenCentral()

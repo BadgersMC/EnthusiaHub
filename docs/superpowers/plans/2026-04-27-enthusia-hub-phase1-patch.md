@@ -10,6 +10,20 @@
 
 ---
 
+## Collaborator Workflow — Use Git Worktrees
+
+Tasks below are self-contained — pick one up in its own worktree so other agents/humans can work the next task in parallel without stepping on you:
+
+```bash
+git worktree add ../EnthusiaHub-task<N> -b feat/phase1-task<N>
+cd ../EnthusiaHub-task<N>
+# implement, ./gradlew shadowJar, commit, push, open PR
+```
+
+When the PR merges, tear it down: `git worktree remove ../EnthusiaHub-task<N>`. Don't switch branches in the main checkout — keep that one for coordination only. Full rationale in the design doc's *Collaborator Workflow* section.
+
+---
+
 > **No unit test framework is configured in this project.** Each task includes a build step and a manual verification checklist to run on a local test server. Build command: `./gradlew shadowJar` from `D:/BadgersMC-Dev/DeluxeHub/`. Output jar: `build/libs/EnthusiaHub-<version>.jar`.
 
 ---

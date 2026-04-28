@@ -1,5 +1,5 @@
-name: 'DeluxeHub'
-authors: [ ItzSave, ItsLewizzz ]
+name: 'EnthusiaHub'
+authors: [ BadgersMC, ItzSave, ItsLewizzz ]
 version: '${version}'
 description: "The ultimate all in one hub solution."
 api-version: 1.21

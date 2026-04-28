@@ -16,6 +16,37 @@ The Phase 1 Java codebase at `D:/BadgersMC-Dev/DeluxeHub` is a **temporary worki
 
 ---
 
+## Collaborator Workflow — Use Git Worktrees
+
+This repo is shared. Multiple agents/humans will hack on parallel tasks. **Use `git worktree`, not branch switching in a single checkout** — switching branches mid-task pollutes IDE caches, breaks running test/dev servers, and risks accidental cross-task commits.
+
+```bash
+# Clone once
+git clone https://github.com/BadgersMC/EnthusiaHub.git
+cd EnthusiaHub
+
+# Per task: spawn an isolated checkout on its own branch
+git worktree add ../EnthusiaHub-<short-task-name> -b feat/<short-task-name>
+
+# Work in that directory. Build, test, commit, push there.
+cd ../EnthusiaHub-<short-task-name>
+./gradlew shadowJar
+
+# When merged, tear it down
+git worktree remove ../EnthusiaHub-<short-task-name>
+git branch -d feat/<short-task-name>
+```
+
+**Rules:**
+- One worktree per active task. Never two tasks in the same checkout.
+- Branch naming: `feat/<scope>`, `fix/<scope>`, `chore/<scope>` — Conventional Commits style.
+- Don't push directly to `master` — open PRs from your worktree branch.
+- Treat the main checkout (`EnthusiaHub/`) as a coordination hub: pulls, branch list, merge conflict resolution. Don't do task work there.
+
+The `superpowers:using-git-worktrees` skill is the authoritative reference for agentic workers.
+
+---
+
 ## Overview
 
 Two-phase plan for EnthusiaHub:

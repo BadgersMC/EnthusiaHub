@@ -9,6 +9,7 @@ import net.zithium.deluxehub.module.modules.hotbar.HotbarItem;
 import net.zithium.deluxehub.module.modules.hotbar.HotbarManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -238,7 +239,7 @@ public class PvPSwordItem extends HotbarItem {
                 String[] parts = enchantString.split(":");
                 if (parts.length == 2) {
                     try {
-                        Enchantment enchant = Enchantment.getByName(parts[0]);
+                        Enchantment enchant = Enchantment.getByKey(NamespacedKey.minecraft(parts[0].toLowerCase()));
                         int level = Integer.parseInt(parts[1]);
                         if (enchant != null) {
                             meta.addEnchant(enchant, level, true);
